@@ -18,7 +18,7 @@ Base = declarative_base()
 
 # SCHEME: DATABASE_DSN = 'mysql+pymysql://<USER>:<PASS>@<HOST>/<DATABASE>'
 # DATABASE_DSN = 'sqlite:///parselog' # for local sqlite database.
-DATABASE_DSN = 'mysql+pymysql://root@localhost/parselog'
+DATABASE_DSN = 'mysql+pymysql://root@localhost/parselog?charset=utf8'
 
 class LogEntry(Base):
   __tablename__ = 'entries'
