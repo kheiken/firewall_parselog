@@ -3,6 +3,7 @@
 import os
 import sys
 import re
+import argparse
 from datetime import datetime
 from sqlalchemy import Column, DateTime, String, Integer
 from sqlalchemy.ext.declarative import declarative_base
@@ -16,12 +17,50 @@ init()
 
 Base = declarative_base()
 
+logfile = None
+table = 'entries'
+mysql_user = 'root'
+mysql_password = ''
+mysql_host = 'localhost'
+mysql_port = '3306'
+mysql_database = 'parselog'
+
+def parse_arguments():
+  global table, logfile, mysql_user, mysql_password, mysql_port, mysql_database
+
+  parser = argparse.ArgumentParser()
+  parser.add_argument('-t', '--table', dest='table', action='store', help="Set the MySQL table to create and store the entries in (default: entries)")
+  parser.add_argument('-s', '--server', dest='server', action='store', help="Set MySQL host (default: localhost)")
+  parser.add_argument('-u', '--user', dest='user', action='store', help="Set MySQL user (default: root)")
+  parser.add_argument('-p', '--pass', dest='password', action='store', help="Set MySQL password (default: none)")
+  parser.add_argument('-P', '--port', dest='port', action='store', help="Set MySQL port (default: 3306)")
+  parser.add_argument('-d', '--database', dest='database', action='store', help="Set MySQL database (default: parselog)")
+  parser.add_argument('logfile', help='the log file')
+  args = parser.parse_args()
+
+  logfile = args.logfile
+  if args.table:
+    table = args.table
+
+  if args.server:
+    mysql_host = args.server
+  if args.port:
+    mysql_port = args.port
+  if args.user:
+    mysql_user = args.user
+  if args.password:
+    mysql_password = args.password
+  if args.database:
+    mysql_database = args.database
+
+parse_arguments()
+
 # SCHEME: DATABASE_DSN = 'mysql+pymysql://<USER>:<PASS>@<HOST>/<DATABASE>'
 # DATABASE_DSN = 'sqlite:///parselog' # for local sqlite database.
-DATABASE_DSN = 'mysql+pymysql://root@localhost/parselog?charset=utf8'
+DATABASE_DSN = 'mysql+pymysql://%s:%s@%s:%s/%s?charset=utf8' % (mysql_user, mysql_password, mysql_host, mysql_port, mysql_database)
 
 class LogEntry(Base):
-  __tablename__ = 'entries'
+  __tablename__ = table
   id = Column(Integer, primary_key=True)
   time_stamp = Column(DateTime)
   auth_user = Column(String(255))
@@ -95,11 +134,6 @@ def main(filename):
     print(Fore.RED + "NO entries from log file were written to database!" + Fore.RESET)
 
 if __name__ == '__main__':
-  if len(sys.argv) < 2:
-    print("Usage: ./%s <logfile>" % str(sys.argv[0]))
-    sys.exit(1)
-    
-  filename = str(sys.argv[1])
-  if os.path.isfile(filename):
-    print("Reading log %s" % filename)
-    main(filename)
+  if os.path.isfile(logfile):
+    print("Reading log %s" % logfile)
+    main(logfile)
